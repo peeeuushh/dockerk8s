@@ -1,0 +1,2294 @@
+        https://pad.riseup.net/p/lti-dockers
+
+
+Masood Ahmed
+9663124747
+
+docker and Kubernetes
+
+
+Dockers
+
+containers
+
+micro services
+
+1) Costing
+2) maintenance 
+3) space
+
+Virtual machines
+hypervisor
+
+type 1 
+hypervisor --- VM --- OS  --- Application
+
+type 2
+
+OS  --- hypervisor --- VM --- OS  --- Application
+
+Containers
+1) host OS
+  a) Bare metal ( physical server )
+  b) VM
+  c) cloud instance
+  
+2) Container run time
+  small piece of Software to be installed on OS 
+   a) docker  --- docker
+   b) podman  -- redhat
+   c) dockerd , crio 
+        
+commands
+
+  $ cat /etc/*release*
+  apt
+$  docker --version
+
+$ sudo su
+# apt update -y
+# apt install docker.io -y
+
+create or run the container
+1) pull the image and run the container
+
+2) directly run the container
+  if image is existing or not 
+    if image does not exist then it will downlaod the image and then run the 
+    container
+
+( pull the image from registery into local system)    
+# docker pull nginx
+
+( check the number of containers )
+#  docker ps -a
+
+run the container from the image
+#  docker run --name web  -itd  nginx
+   ( options )
+   --name   container name
+-i  -- interactive
+-t  --  terminal
+-d  -- detach mode ( run the container as deamon) 
+
+( login into container )
+# docker exec -it web bash
+# cat /etc/*release*
+# exit
+
+#  docker run --name web1  -itd  schoolofdevops/vote:v3
+# docker images
+# docker ps
+
+# docker exec -it web1 bash
+# docker exec -it web1 sh
+# exit
+
+# docker run --name web2 -itd -P schoolofdevops/vote:v3 
+( -P  -- enable the dynamic port )
+
+#  docker inspect schoolofdevops/vote:v3 | grep -i port -A5
+
+# docker run --name mindtree -itd -p 3456:80 schoolofdevops/vote:v3
+
+stops the running container
+# docker stop mindtree
+# docker ps
+# docker ps -a
+
+remove the container
+# docker rm -f test123
+------------------------------------------------------
+
+creating our own image from docker file
+
+1) image OS and its flavor
+ eg: rhel , ubuntu , debain, suse etc etc
+ 
+2) which software or application need to be added in the image
+3) which services to start
+4) which ports to expose, application port
+5) which files and directories  to be added
+
+ create the docker image
+ 1) basic web server on ubuntu OS
+ 
+ # cat > Dockerfile  ( hit the enter key )
+FROM ubuntu:latest
+RUN apt update && \
+        apt install curl  apache2  -y
+WORKDIR /var/www/html
+COPY index.html   .
+CMD ["apachectl", "-DFOREGROUND"]
+EXPOSE 80
+
+^d ( save and exit )
+# cat > index.html
+Welcome to LTI Mindtree Web server !!!!
+^d ( save and exit )
+
+#  docker build -t mindtree-web:v1  .
+
+# docker images-
+
+# docker run --name lti -itd -P mindtree-web:v1
+# docker ps
+# docker exec -it lti bash
+# vim file1 ( it will fail )
+# apt install vim -y
+# vim file1
+( it works)
+# exit
+# docker ps
+# curl http://localhost:<portnumber>
+
+open browser from windows os
+http://<linux machine>:<port>
+
+how to push the local image into docker hub
+
+# docker push mindtree-web:v1
+( it will fail )
+
+solution 
+
+we need to tag the image with our docker id
+
+# docker tag  mindtree-web:v1  masoodms/mindtree-web:v1
+# docker images
+
+we need to login into docker hub
+# docker login 
+#  docker push masoodms/mindtree-web:v1
+ 
+# docker image ls -q | xargs docker image rm -f
+ 
+ 
+--------------------------------------------
+https://tcheck.co/2HYK69
+
+stroage in containers
+
+volumes
+
+-----------------------------
+the containers are ephemeral ( non persistent)
+
+# mkdir /mydata
+#  docker run --name web123 -itd -P -v /mydata:/oracle masoodms/mindtree-web:v1
+# docker exec -it web123 bash
+
+---------------------------------------------------------------
+Day 2
+
+recap of day 1
+
+Dev + Ops
+
+
+1) containers   2) kubernetes
+2) Ansible  3) Terraform   4) Jenkins  5) puppet 
+6) salt stack 
+
+storage in containers
+volumes  ( -v )
+host-dir:container-dir
+
+example
+-v  /mydir:/data123
+
+selinux enabled  ( enforcing mode )
+# getenforce
+
+-v  /mydir:/data123:Z
+
+# ls -ld /rps123
+( dir does not exist )
+# docker run --name sap  -itd  -P -v /rps123:/oracledb masoodms/mindtree-web:v1
+# ls -ld /rps123
+( dir will be existing )
+------------------------------------------------
+creating the image from running containers
+
+ $ docker run --name web1  -it ubuntu
+ # apt update
+ # apt install apache2  curl  vim -y
+ # cd /var/www/html
+ # ls -l
+ # > index.html
+ # vim index.html
+  Welcome to .............. !!!!!
+  :wq!
+  #  apachectl -D forground
+  # service apache2 status
+  # curl http://localhost
+  
+  detatch the container 
+  ctl +pq
+  
+  check the ip address of container 
+  $ docker inspect <container id> | grep -i ipaddr
+  $ curl http://<ipaddress>
+  
+
+  stop the container to commit 
+  $ docker stop <containerid>
+  $ docker ps -a
+  $ docker commit --change='CMD ["apachectl", "-DFOREGROUND"]' -c "EXPOSE 80" <containerid>  web:v1
+ 
+ # docker images
+  # docker run --name web123 -itd -P web:v1
+  # docker ps
+  # curl http://localhost:<portnumber>
+ ----------------------------------------------
+ Kubernetes  
+ 
+ challenges in docker for managing the containes
+ 
+1. inventory for  containers
+2. no centerlized login  to manage the containers
+3. H/A of Containers 
+4. resource managment
+5. NO H/A of Servers
+ 
+ Solution 
+ 
+ 1. Docker swarm
+ 2. Mesos  ---- 50,000 nodes in a single cluster
+ 3. Kubernetes ---  its born from google , second largest opensource after 
+ linux, Linux Foundation --- CNCF
+ default containers orachastration tool
+    5000  nodes in a single cluster
+ 
+ k8s
+ 
+ cluster 
+ group or combination / collection of servers , they called as nodes
+ 
+ physical components of k8s
+ 1) master node/nodes   --- control plane
+ 2) worker nodes
+ 
+ options to setup the k8s
+ 1) minikube  ( one node cluster )
+ 2) kubeadm ( multi node )
+ 3) suse rancher
+ 4) cloud  ( manged kubernetes services )
+    a) Azure --- aks
+    b) AWS   --- eks
+    c) GCP   --- GKS
+    
+    master node will be hidden from user and only worker nodes will be available 
+
+----------------------
+1) configuration management tool
+existing setup , ansible 
+
+2) orchestration management tool
+to perform the task from the scratch or from begining
+Terraform for platform
+containers , kubernetes
+pods
+
+pod is smallest unit or object of k8s
+pod can have single container or it can be multi-container
+image is required to create the pod
+
+Physical Architecture of K8s
+
+Master node --- control plane
+pods -- k8s will be running
+
+worker nodes
+create the user pods in worker nodes
+
+5000 nodes can accommodate in a single cluster
+in each worker node we can have upto 110 pods
+
+components of master nodes
+Master node  ( Control Plane )
+1) API server : running as pod --  ( gateway of cluster )
+    CLI  or Dashboard ( BUI )
+2) ETCD : running as pods   --- data base of k8s
+3) Controller : running as pods -- replicas or status of pods, manage the H/A of Cluster 
+4) scheduler : running as pods -- decide and schedule the pods in the worker node
+5) core-dns : running as pods --- ip to name for pods , it plays a very important role in service discovery ( these pods will never comes up with out installing the the CNI pluggins )
+6) kube-proxy : running as pods -- play a important role in pod to pod communication ( internal and external network )
+7) kubelet : its a agent or daemon and run continously send the heart beat messages to API server about the nodes 
+8) container run time ( docker , crio, podman , containerd )
+Note : API-server talk to ETCD and rest of componets will talk to API-Server
+
+II. components of worker node
+worker node 
+1) kubelet
+2) kube-proxy
+3) container run time ( docker , crio, podman , containerd )
+
+CNI --- Container Network Interface
+a) calico   ( we use this plugins )
+b) weave
+c) Canal  etc etc  
+
+--------------------
+
+I. Install the k8s packages 
+
+login into k8master 
+
+run the script on all the vms
+$ cat >k8setup.sh   ( Enter key )
+
+#( copy and paste the below lines)
+# install the curl and https transport package
+sudo apt update && sudo apt install -y apt-transport-https curl
+
+# verifying the signrature of the repository
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+# setup and Add the repository url to the file /etc/sources.list.d/kubernetes.list
+cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+# installing the kubeadm kubectl kubelet and docker
+
+sudo apt  update
+
+sudo apt  install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00 docker.io 
+
+
+# packages to be hold to prevent update/remove
+sudo apt-mark hold kubelet kubeadm kubectl
+
+sudo apt-mark showhold  
+
+
+#( copy till above line )
+
+^d ( to save and exit )
+$ bash  k8setup.sh
+rps
+
+Note : run  the script  on k8worker1  k8worker2 also 
+
+---------------
+configure the master node
+$ sudo kubeadm init
+$ mkdir -p $HOME/.kube
+$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+$ kubectl get nodes
+( master node not ready )
+
+$ kubectl get pods -n kube-system
+( core-dns pods will be pending )
+
+Note : core dns pods will be up only when we install the CNI Plugins
+
+III. Install the Calico Plugins
+
+https://github.com/projectcalico/calico/blob/master/manifests/calico.yaml
+( click on RAW  icon on right side , it opens on other page , then press Ctrl +a , and crtl +c ( copy )
+
+$ cat > calico.yaml
+( paste from the web site )
+press enter key
+press ^d to save and exit 
+
+$ ls -l calico.yaml
+
+$  kubectl apply -f calico.yaml
+
+$ kubectl get pods -n kube-system -w
+
+create the token in the master node join the worker node into cluster
+
+1) login into master node and create the token
+$ sudo kubeadm token create --print-join-command
+( copy the token )
+
+2) login into k8worker1
+and paste it with sudo command 
+
+$ sudo ( paste the token)
+
+3) login into k8worker2
+and paste it with sudo command 
+
+$ sudo ( paste the token)
+
+4) come back to master server 
+$ kubectl get nodes  
+
+$ kubectl get pods -A  -w
+( press ctl +c when all the pods shows running)
+
+-----------------------------------------------------
+
+namespace
+its a cluster resource for virtual or logical cluster of physical cluster
+
+# kubectl get pods -o wide
+
+
+# kubectl create ns mindtree
+
+----------------------------
+how to copy or enable the kubectl command on the other linux machine
+1) login into master node
+
+rps@k8master:~$ scp  .kube/config  rps@k8worker1:/tmp
+
+2) login into other node for example k8worker1
+mkdir .kube
+rps@k8worker1:~$ cp /tmp/config  .kube/
+rps@k8worker1:~$ ls -l .kube/
+total 8
+-rw------- 1 rps rps 5638 Oct 12 09:35 config
+
+
+
+$ kubectl describe node k8master | grep -i taint
+
+names spaces 
+$ kubectl get ns
+default           Active   18h
+kube-node-lease   Active   18h
+kube-public       Active   18h
+kube-system       Active   18h
+
+default : cluster resources get created if dont specify any namespace
+
+kube-node-lease : kublete will send heart beats to the other node 
+
+kube-public : open for all users , with rbac implementation 
+
+kubectl get pods -A  :command to see pods in the name space
+
+
+$ kubectl api-resources
+
+------------------------
+create any cluster rescource we have two options
+1) cli  --- imperative method
+2) template  --- declarative method
+   ( json or yaml )
+ 
+create the namespace
+$ kubectl create ns lti
+  or
+$ kubectl create ns lti --dry-run=client -o yaml 
+
+$ kubectl create ns lti --dry-run=client -o json
+
+ example
+ 
+ $ kubectl create ns lti --dry-run=client -o yaml > lti-ns.yaml
+ 
+$  kubectl apply -f lti-ns.yaml
+
+$ kubectl run test123 --port=80 --image=nginx  --dry-run=client -o yaml > web2.yaml
+	
+$ kubectl apply -f web2.yaml
+
+labs
+
+To list all namespace
+
+$ kubectl get ns
+ 
+To display detailed information about namespace
+
+$ kubectl describe ns default
+
+eg :
+
+$ kubectl describe ns kube-system
+
+To create namespace
+
+$ kubectl create ns test
+
+$ kubectl create ns prod
+
+to list newly created namespace
+
+$ kubectl get ns
+
+To delete namespace
+
+$ kubectl delete ns test
+
+Create namespace using yaml file
+
+$ kubectl create ns dell --dry-run=client -o yaml    * it will print the yaml file as the output)
+
+$ kubectl create ns dell --dry-run=client -o json
+Save the json file 
+   
+$ kubectl create ns dell --dry-run=client -o yaml >dell.yaml
+
+Create the namespace
+
+$ kubectl apply -f dell.yaml
+
+
+to delete the namespace using yaml file
+
+$ kubectl delete -f dell.yaml
+
+$ kubectl get ns
+
+----------------------------------
+pods 
+single container pod
+multi container pod
+
+pod is the smallest component in k8s
+
+Multi-container Pod:
+	    Pod create by using multiple images
+Multi-Container pod can not be created by imperative method
+Challenges in multi container pods:
+    1. Sharing Resources
+    2. Networking
+    3. H/A of pods 
+    
+Solution: Instead of creating multi-container pod 
+				Just create different pods for different micro-service
+				
+				
+example
+$ cat > multi-container-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  labels:
+    run: web
+spec:
+  containers:
+    - name: nginx
+      image: nginx:stable-alpine
+      ports:
+        - containerPort: 80
+          protocol: TCP
+      volumeMounts:
+        - name: data
+          mountPath: /oracle
+ 
+    - name: sync 
+      image: schoolofdevops/sync:v2
+      volumeMounts:
+        - name: data
+          mountPath: /java
+ 
+  volumes:
+    - name: data
+      emptyDir: {}
+
+^d ( to save and exit )
+
+		Advantage of multicontainer pod :
+				1. other container act as helper container
+				2. Storage sharing is easy
+				
+Labs 
+
+Pod Labs
+
+
+To list pod in default namespaces
+
+$ kubectl get pod
+
+To list the pod running in all namespaces
+
+$ kubectl get pod -A
+
+
+to create the pod
+
+$ kubectl run testpod --image=nginx 
+
+To check the pod status
+
+$ kubectl get pod
+
+To dispay detailed information about pod and events
+
+$ kubectl describe pod testpod
+
+To list the nodes where the pod is running and pod ip details
+
+$ kubectl get pod -o wide
+
+To login to the pod containers
+
+$ kubectl exec -it testpod -- bash
+# ps  
+( it wont work because package does not exist )
+# cat /etc/*release*
+# apt-get update
+# apt-get install procps -y
+# ps
+# exit
+
+to display the pod information in yaml or json format
+
+$ kubectl get pod testpod -o yaml
+
+$ kubectl get pod testpod -o json
+
+
+To delete the pod
+
+$ kubectl delete pod testpod 
+
+create the pod using yaml
+
+$ kubectl run webpod --image=nginx --port=80 --dry-run=client -o yaml > webpod.yaml
+$ ls -l webpod.yaml
+$ kubectl apply -f webpod.yaml
+$ kubectl get pods
+$ kubectl delete  -f webpod.yaml
+
+-----------------------------
+Multi-container Pod  
+Note : we can't create the multi-container pod from CMD line , using imperative method
+we should use declarative method , using the template file
+
+
+Labs
+
+
+$ cat > multi-container-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  labels:
+    run: web
+spec:
+  containers:
+    - name: nginx
+      image: nginx:stable-alpine
+      ports:
+        - containerPort: 80
+          protocol: TCP
+      volumeMounts:
+        - name: data
+          mountPath: /oracle
+ 
+    - name: sync 
+      image: schoolofdevops/sync:v2
+      volumeMounts:
+        - name: data
+          mountPath: /java
+ 
+  volumes:
+    - name: data
+      emptyDir: {}
+
+^d ( to save and exit )
+
+create the pod 
+
+$ kubectl apply -f multi-container-pod.yaml
+
+check the pod status
+
+$ kubectl get pod
+
+check how many containers and name are there in the pod
+
+$ kubectl describe pod web | less
+
+( can see two containers web and sync )
+press q  to exit
+
+
+
+To verify that the container of the same pod share network and volume 
+
+login to first container
+
+$ kubectl exec -it web sh -c nginx
+
+execute the following command
+hostname
+ip a
+
+cat /etc/issue
+
+cd /oracle
+
+create some empty files
+touch a b c d e f
+
+exit
+
+Login to second container of the pod web
+
+$ kubectl exec -it web sh -c sync
+
+execute the following command
+hostname
+ip a
+
+cat /etc/issue
+
+cd /java
+ls -l
+you will able to see the same files which  you created by login to nginx container
+
+To check the container logs
+
+kubectl logs web -c nginx
+
+kubectl logs web -c sync
+
+$ kubectl get pods
+
+-------------------------------------------------------------------------
+Controller
+get the H/A  of Clusterlo9
+1) Replicaset
+2) deployment
+3) daemonsets
+
+1) replicaset :
+  to create the pods with number of copies to gain H/A
+  
+  example
+$ cat > replica1.yaml  
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: vote
+spec:
+  replicas: 5
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3]}
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: vote
+        version: v2
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v2
+          ports:
+            - containerPort: 80
+              protocol: TCP
+  
+    press ctl+d  ( to save )
+
+draining the node
+
+kubectl drain k8worker2 --force  --ignore-daemonsets
+
+$ kubectl uncordon k8worker1
+
+how to increase and decrease 
+
+three options
+1) cmd line
+2) edit the config file and change the numbers and apply again
+3) edit the run time config of rescources
+
+1) cmd
+$ kubectl scale rs vote --replicas=6
+
+
+
+
+2) editing the template
+ $ vim <template file>
+    modify the values
+    :wq!
+ $ kubectl apply -f <template file>
+ 
+ 3) edit the ruuning config of rescourc
+  $ kubectl edit rs vote
+
+Lab 
+
+
+Replicaset lab
+
+delete all the pod
+$ kubectl delete pod --all
+
+$ cat >vote-rs.yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: vote
+spec:
+  replicas: 5
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3]}
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: vote
+        version: v2
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v2
+          ports:
+            - containerPort: 80
+              protocol: TCP
+ctrl+d to save
+
+create the repicaset
+
+$ kubectl apply -f vote-rs.yaml
+
+To list the replicaset
+$ kubectl get rs
+to list the pods
+$ kubectl get pod
+to display detailed information about pod
+$ kubectl describe rs vote
+
+#Test the pod HA by deleting one pod
+
+$ kubectl get pod
+copy one of the pod name
+$ kubectl delete pod podname
+eg
+$ kubectl delete pod vote-....
+ you will see a new pod immidiately created
+
+Making the worker node does down
+$ kubectl drain k8worker2   --force --ignore-daemonsets 
+
+$ kubectl get pod -o wide 
+( can see the pods running on other node )
+
+
+bring the node back
+$ kubectl uncordon k8worker2 
+
+
+Create the normal pod using the folliwng yaml file
+$ cat > newpod.yaml
+
+ctrl+d
+$ kubectl apply -f newpod.yaml
+
+$ kubectl get pod
+-- Termination can be seen if you put "kubectl get pod -o wide --watch " in separate terminal
+
+you will see the new pod is terminating . the reason of terminating of the new pod that the new pod is having the same label what is there in the selector of the rs
+
+Changed the desired state of replicaset by editing the file vote-rs.yaml and modify the replicas from 5 to 8
+and then
+$ vi vote-rs.yaml
+chnage replca count to 8
+
+$ kubectl apply -f vote-rs.yaml
+
+Modify the replica count using command
+
+$ kubectl scale rs vote --replicas=6
+
+
+now finaly to delete the pods , then delete the replicaset
+
+$ kubectl get rs
+$ kubectl delete rs vote
+$ kubectl get pods
+
+----------------------------------
+
+1) cmd line
+$ kubectl get rs
+kubectl scale rs <replica set name> --replicas=<number>
+example 
+$kubectl scale rs vote --replicas=6
+
+2) edit the template file and apply again 
+$ vim <filename>
+( set the value >
+:wq!
+
+$ kubectl apply -f  <file name>
+
+3) edit the run time configuration of rs and modify 
+$ kubectl get rs
+$ kubectl edit rs <replica set>
+( set the value and save )
+$ kubectl get rs
+
+-------------------------------------- 
+ 
+labels
+
+matching and indentify purpose
+
+$ kubectl get pods --show-labels
+
+---------------------------------------
+Azure lab details
+
+rps
+pass@1234567890
+
+vm01
+172.190.235.178  
+
+vm02
+20.172.254.100
+
+vm03
+172.190.233.213
+
+vm04
+20.25.99.7
+
+vm05
+13.68.186.56
+
+vm06
+172.200.74.176
+
+vm07
+20.81.153.114
+
+vm08
+20.110.36.37
+
+vm09
+172.176.135.29
+
+vm10
+172.200.74.124
+
+vm11
+20.219.23.214
+
+vm12
+20.124.255.108
+
+-----------------------
+Steps to install Minikube:
+
+step 1
+$ sudo su
+
+# apt-get update -y
+
+step 2
+
+# apt-get install curl wget apt-transport-https -y
+
+step 3
+
+# apt-get install virtualbox virtualbox-ext-pack
+
+step 4
+wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+
+
+# 
+
+
+step 5
+
+# cp minikube-linux-amd64 /usr/local/bin/minikube
+
+step 6
+
+# chmod 755 /usr/local/bin/minikube
+
+step 7
+
+# minikube version
+
+step 8 : Install Kubectl
+
+# curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -n
+
+# echo “deb http://apt.kubernetes.io/ kubernetes-xenial main” | tee /etc/apt/sources.list.d/kubernetes.list
+
+
+# vim  /etc/apt/sources.list.d/kubernetes.list
+( remove the quotes begining and end )
+:wq!
+ku
+# apt-get update -y && apt-get install kubectl -y
+
+Now, verify whether kubectl is installed or not.
+
+# kubectl version -o json
+# apt install docker.io -y
+
+# minikube start —-vm-driver=none --force
+
+# kubectl cluster-info
+
+# kubectl get nodes
+
+# kubectl get ns
+
+# kubectl get pods -A
+
+# kubectl run my-nginx  --image=nginx   --port=80
+# kubectl get pods
+
+-------------
+Pod labels
+
+Pod labels are key value pair that we assigned to pod and provide meningful information to pod . POD labels are mandatory and ned to assigned to pod by the user
+
+
+$ kubectl run testpod --image=nginx  --port=80 
+
+$ kubectl get pod --show-labels
+
+( every pod it own default label )
+
+
+To create the pod with user defined label
+$ kubectl run newpod --image=nginx -l app=nginx
+
+to list the pod labels
+
+$ kubectl get pod --show-labels
+
+create the pod using yaml file with labels
+
+modify the demopod.yaml
+
+$ cat >demopod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:   
+  name: demopod
+spec:
+  containers:
+  - image: nginx
+    name: demopod
+press ctrl-d
+
+$ cat demopod.yaml
+
+$ kubectl apply -f demopod.yaml
+
+check the pod labels using the command
+$ kubectl get pod  --show-labels
+
+create a new pod and defined the label in command line 
+
+$ kubectl run appserver --image=tomee -l app=tomee --port=8080
+
+to add more labels to pod using the command line
+
+kubectl label pod appserver env=dev version=1
+
+To list the pod matching specific labels
+
+$  kubectl get pod -l app=tomee
+
+to overwrite  existing pod label
+
+$ kubectl label pod appserver app=web --overwrite
+
+$ kubectl get pod --show-labels
+
+to add new pod label
+
+$ kubectl label pod demopod role=webserver
+
+to delete the pod label
+
+$ kubectl label pod demopod role-
+
+to list all the pod labels
+
+$ kubectl get pod --show-labels
+
+to delete all the pods
+
+$ kubectl delete pod --all
+
+---------------------------------
+Networking in K8s
+service 
+# kubectl get svc 
+1) ClusterIP
+2) Nodeport
+3) LoadBalancer
+
+1) ClusterIP : default type ( internal communication between the pod in the
+same namspace or other namespace )
+
+2) Nodeport : to communicate the pods outside the cluster ( access the pod 
+applications out side the cluster , external network )
+
+create the service 
+
+
+task 
+1) delete all pods in default and other namespaces which you have created  
+note: do not delete pod in then kube-system namespace
+1) create two  namespaces
+a) webserver
+b) testserver
+
+2) create a replicaset of 5 into webserver by using any image
+3) create a replicaset of 4 into testserver by using any image
+4) login into any pod in webserver namespace 
+    a) install the packages for ifconfig , curl  , top command
+5) ping the ip and curl the ip of other pods running in the testserver
+6) login into any pod of testserver 
+   install ping , curl and access the application of other pods running in the
+   webserver
+
+ ---------------------------------------------
+ creating the service
+
+ 
+ pods uses the static ip
+ 
+ creating the service and attach to the rs  then Endpoint gets created with 
+ static ip, and its known as ILB ( internal Load Balancer )
+ 
+$ kubectl expose rs vote --name votesvc --selector role=vote --port=80 
+
+----------------------------------
+Service Lab
+
+Service discovery
+
+delete all pods and replicasets
+
+$ cat > webrs.yaml
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: web 
+spec:
+  replicas: 1
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: web 
+      app: nginx
+  template:
+    metadata:
+      name: web 
+      labels:
+        app: nginx 
+        role: web 
+        version: v3
+    spec:
+      containers:
+        - name: web 
+          image: nginx 
+          ports:
+            - containerPort: 80
+              protocol: TCP
+
+ctrl + d to save
+
+
+--------------------------
+$ cat > vote-rs.yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: vote
+spec:
+  replicas: 1
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3]}
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: vote
+        version: v3
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v3
+          ports:
+            - containerPort: 80
+              protocol: TCP
+ctrl+d to save
+
+create the replicasets
+$ kubectl apply -f webrs.yaml
+$ kubectl apply -f vote-rs.yaml
+
+check the status of the replicaset and the pod
+$ kubectl get rs
+
+$ kubectl get pod
+
+create the service for vote replicaset ( web wants to communicate with vote)
+ 
+check the service status 
+$ kubectl get svc
+
+check the pod ip address and the service endpoints
+
+$ kubectl get pod -o wide
+
+$ kubectl describe svc votesvc
+
+check the endpoint entry in the output the endpoint entry matches with the pod ip of vote.  check the selector field in the describe output with the help of selector the service is selecting the endpoints (pod to which forward the request)
+service is a internal load balancer, web pod uses the svc name votesvc to connect to vote pod, the service name votesvc will be resolved to the service ip and the service will forward the request to the endpoints.
+
+login to the web pod. Identify the pod name of web using the 
+kubectl get pod
+
+kubectl exec -it web-pod-name bash
+
+inside the pod execute the command
+
+
+you will able to see the web page.
+
+to futher understand how the service name resolves 
+
+install a package in the pod container
+# apt update 
+# apt install dnsutils -y
+
+nslookup votesvc
+
+you will see the fully qualified name of the service 
+
+cat /etc/resolv.conf
+
+you will find the ip address of the dns server
+
+to find more about dns server 
+
+type 
+exit 
+
+come out of the container 
+
+increase the repicas and working wiht different name space
+
+
+Increase the replica count from 1 to 4
+$ kubectl scale rs vote --replicas=4
+
+check the pod
+
+$ kubectl get pod -o wide
+
+check the service votesvc and you will find 4 endpoints in the service
+$ kubectl describe svc votesvc
+
+login to the web pod. identify the name of the pod using the kubectl get pod command
+kubectl exec -it web-xxx bash
+
+( install the elinks package for tui broswer )
+# apt install elinks -y
+# elinks http://votesvc:80
+press ctrl r ( to refresh and the pod names changing in the page )
+press q to quit and select yes to exit
+
+
+
+exit from the pod using the command
+# exit
+
+
+communication between different namespace
+
+delete the vote-rs and votesvc service 
+
+$ kubectl delete rs vote
+$ kubectl delete svc votesvc
+
+create a new namespace
+$ kubectl create ns ecom
+create the replicaset and the service in the namespace ecom
+$ kubectl apply -f vote-rs.yaml -n ecom
+
+create the service in ecom namespace
+
+$ kubectl expose rs vote --name votesvc --selector role=vote --port=80 -n ecom
+
+check the service and the pod 
+kubectl get pod,svc -n ecom
+
+login to the pod web .check the name of the web pod using the kubectl get pod command
+$ kubectl exec -it web-c6zzk bash
+
+execute 
+
+curl -v http://votesvc:80
+
+you will see the error host name not resolved
+check the hostname resolution using the nslookup command
+
+nslookup votesvc
+
+the nslookup command also shows error and not able to resolve the service name
+
+try the command
+
+nslookup votesvc.ecom
+
+you will see the service name resolved successfully
+
+test the application using
+
+curl -v http://votevsc.ecom
+
+user need to use the servicename.namespace as the connection name for communicating with other pod.
+
+same namespace only use servicename and between namespace servicename.namespace
+
+# curl -v http://votesvc.ecom.svc.cluster.local
+it works
+
+execute the curl command multiple time can see the pod name changes in the page 
+# exit 
+
+--------------------------------
+nodeports
+
+
+
+command for setting the auto configuration for yaml file:
+    1. create a file .vimrc
+    2. edit the file --> # vim .vimrc
+							set ai  
+							set et  
+							set ts=2
+							set cuc
+							set nu 
+		 3. save and exit
+---------------------------------------------------------
+Day 5
+a) deployment
+b) ingress controller
+c) config maps
+d) storage
+e) resource managment
+f) project
+
+----------------
+# minikube delete
+# minikube start ........
+
+Deployment
+rolling updates
+
+example
+
+
+              
+              
+In deployment template:
+    in Strategy:
+        maxSurge=2 --> creating 2 pods
+        maxUnavailable=0 --> deleting 2 pods
+        
+        
+---------------------------------------
+Lab 
+
+Deployment Lab
+
+Delete all replicaset, pod and service
+
+$ kubectl delete rs vote
+
+$ kubectl delete pod --all
+
+$ kubectl delete svc vote
+
+$  kubectl get pods,ns,svc -n ecom
+( created in previous lab )
+
+$ kubectl delete pods --all -n ecom
+
+$ kubectl delete rs vote -n ecom
+$ kubectl delete svc votesvc -n ecom
+
+
+Create the Deployment
+
+$ cat > vote-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  revisionHistoryLimit: 4
+  paused: false
+  replicas: 8
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3]}
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: vote
+        version: v2
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              protocol: TCP
+press ctrl+d
+
+
+Create the deployment using the following command
+$ kubectl apply -f vote-deploy.yaml
+
+$   
+
+Create the service for the depoyment
+$ cat > vote-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote
+  labels:
+    role: vote
+spec:
+  selector:
+    role: vote
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30000
+  type: NodePort
+presse ctrl+d
+
+Create the service 
+
+$ kubectl apply -f vote-svc.yaml
+
+to list the deployment,rs and pod
+
+$ kubectl get deployment,rs,pod
+
+$ kubectl get deployment
+$ kubectl get rs
+$ kubectl get pod 
+
+To list the service
+$ kubectl get svc
+
+
+
+
+verify the node port and access the application using the http://<external ip> in your browser
+
+
+
+Scaling the deployment
+Modify the vote-deploy.yaml file and change the replica count to 4 . you can als use command line to scale the replicas
+apply the yaml file
+$ vim vote-deploy.yaml 
+change the replica count to 4
+$ kubectl apply -f vote-deploy.yaml --record
+verify using 
+
+$ kubectl get deployment
+$ kubectl get pod
+
+Performing rolling update
+
+$ kubectl rollout history deployment vote
+
+modify the vote-depoy.yaml and change the image to vote:/v4
+
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v4
+          ports:
+            - containerPort: 80
+              protocol: TCP
+
+Apply the yaml file
+
+$ kubectl apply -f vote-deploy.yaml  --record
+
+To verify that the upgrade started 
+
+$ kubectl rollout status deployment vote
+
+browse the application in the browser and refresh the page 2 or 2 times you will see old verion and new version of the application
+
+$ kubectl get pod 
+
+$ kubectl describe pod <podname>
+
+verify the image name in the describe output and pod label
+
+To rollback to the previous version if not satisfied with the update
+
+$ kubectl rollout history deployment vote
+
+it will diplay different revision of the update history
+
+To check the changes in each version please use the command
+$ kubectl rollout history deployment vote --revision=1
+
+To rollback to the previous version (revision=1)
+
+$ kubectl rollout undo deployment vote --to-revision=1
+
+to verify the update
+
+$ kubectl rollout status deployment vote
+
+to check the rollout history
+
+$ kubectl rollout history deployment vote
+
+to delete the deployment 
+
+$ kubectl delete deployment vote
+
+or
+$ kubectl delete -f vote-deploy.yaml
+
+https://github.com/mrbobbytables/k8s-intro-tutorials/tree/master/configuration
+
+$ cat > cm-manifest.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: manifest-example
+data:
+  city: Ann Arbor
+  state: Michigan
+
+^d ( save and exit )
+
+$ kubectl apply -f cm-manifest.yaml
+
+$ kubectl get cm
+$ kubectl describe cm cm-manifest
+
+2) create the pod using the config maps for env variables
+$ cat > app.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: env-11
+spec:
+  containers:
+  - name: app
+    image: nginx
+    envFrom:
+    - configMapRef:
+        name: manifest-example
+^d ( save and exit )
+
+$ kubectl apply -f app.yaml
+
+$ kubectl get pods
+
+now login into the pod to check the env variables are injected from file or not
+$ kubectl exec -it env-11 -- bash
+ # env 
+ ( can see the env variable defined in config maps )
+ # exit
+ 
+20.127.160.103
+
+---------------------------------------------------------------------------------------
+																
+													ingress controller
+													
+-> Its a package manager for kubernetes
+-> For configuring ingress we have two ways:
+		    1. ingress template is available on docker hub you can directly apply that
+		    2. you can create a template
+		
+labs
+url : https://learn.microsoft.com/en-us/azure/aks/ingress-basic?tabs=azure-cli
+
+Creating the ingress for application access out side cluster in aks
+
+0) . Installing helm:
+	    a) $ wget https://get.helm.sh/helm-v3.9.3-linux-amd64.tar.gz
+	    b) $ tar xvf helm-v3.9.3-linux-amd64.tar.gz
+	    c) sudo mv linux-amd64/helm /usr/local/bin
+	    d) rm helm-v3.4.1-linux-amd64.tar.gz
+	    e) rm -rf linux-amd64
+	    f) helm version
+
+1) . Basic configuration
+
+$ NAMESPACE=ingress-basic
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --create-namespace \
+  --namespace $NAMESPACE \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
+
+----------------------------------------------
+
+2) . check the service  
+$ kubectl get svc -n ingress-basic
+
+------------------------------------------
+3) . Run demo 2 applications
+    first
+
+$ cat > aks-helloworld-one.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aks-helloworld-one  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aks-helloworld-one
+  template:
+    metadata:
+      labels:
+        app: aks-helloworld-one
+    spec:
+      containers:
+      - name: aks-helloworld-one
+        image: mcr.microsoft.com/azuredocs/aks-helloworld:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: TITLE
+          value: "Welcome to Azure Kubernetes Service (AKS) by RPS"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aks-helloworld-one  
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+  selector:
+    app: aks-helloworld-one
+
+^d ( Save and exit)
+
+second app
+
+$ cat >aks-helloworld-two.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aks-helloworld-two  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aks-helloworld-two
+  template:
+    metadata:
+      labels:
+        app: aks-helloworld-two
+    spec:
+      containers:
+      - name: aks-helloworld-two
+        image: mcr.microsoft.com/azuredocs/aks-helloworld:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: TITLE
+          value: "AKS Ingress Demo By RPS"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aks-helloworld-two  
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+  selector:
+    app: aks-helloworld-two
+
+^d ( save and exit )
+
+-------------------------------------------
+4. Run the two demo applications using kubectl apply
+$ kubectl apply -f aks-helloworld-one.yaml -n ingress-basic
+$ kubectl apply -f aks-helloworld-two.yaml -n ingress-basic
+----------------------------------------------------------------------
+
+5. Create an ingress route
+
+Both applications are now running on your Kubernetes cluster. To route traffic to each application, create a Kubernetes ingress resource. The ingress resource configures the rules that route traffic to one of the two applications.
+
+In the following example, traffic to EXTERNAL_IP/app1 is routed to the service named aks-helloworld-one. 
+Traffic to EXTERNAL_IP/app2 is routed to the aks-helloworld-two service. 
+
+$ cat > hello-world-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-world-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /app1(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: aks-helloworld-one
+            port:
+              number: 80
+      - path: /app2(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: aks-helloworld-two
+            port:
+              number: 80
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: aks-helloworld-one
+            port:
+              number: 80
+^d ( save and exit )
+
+--------------------------------------
+6. Create the ingress resource using the kubectl apply command.
+$ kubectl apply -f hello-world-ingress.yaml -n  ingress-basic
+
+$ kubectl get all  -n ingress-basic
+$ kubectl get ingress  -n ingress-basic
+
+---------------------------------------
+7. test from external network browser
+
+https://<extenal ip>/app1
+https://<extenal ip>/app2
+
+----------------------------------------
+resource managment
+
+can be configure and set on the namespace level and on pod level 
+
+Resource Quota
+
+https://sysdig.com/blog/kubernetes-limits-requests/
+
+resource quota
+
+limit is always bigger than request.
+
+requests is guaranteed and limits is something that can not be exceeded
+
+
+
+What is 1000m CPU in Kubernetes?
+1000m (milicores) = 1 core = 1 vCPU = 1 AWS vCPU = 1 GCP Core. 
+100m (milicores) = 0.1 core = 0.1 vCPU = 0.1 AWS vCPU = 0.1 GCP Core
+
+
+ For example, an Intel Core i7-6700 has four cores, 
+but it has Hyperthreading which doubles what the system sees in terms of cores.
+ So in essence, it will show up in Kubernetes as: 8000m = 8 cores = 8 vCPUs
+
+
+https://sysdig.com/blog/kubernetes-limits-requests/
+
+labs
+
+
+$ kubectl create namespace quota-demo
+
+$ cat > cpu-quota.yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: test-cpu-quota
+  namespace: quota-demo
+spec:
+  hard:
+    requests.cpu: "200m"  
+    limits.cpu: "300m"
+
+^d
+
+$ kubectl create -f cpu-quota.yaml
+
+$ kubectl describe resourcequota/test-cpu-quota --namespace quota-demo
+
+$ cat > quota-demo-testpod1.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpod1
+spec:
+  containers:
+  - name: quota-test
+    image: busybox
+    imagePullPolicy: IfNotPresent
+    command: ['sh', '-c', 'echo Pod is Running ; sleep 5000']
+    resources:
+      requests:
+        cpu: "100m"
+      limits:
+        cpu: "200m"
+  restartPolicy: Never
+
+^d
+
+$ kubectl apply  -f quota-demo-testpod1.yaml -n quota-demo
+
+$ kubectl get pods -n quota-demo
+
+$ cat > quota-demo-testpod2.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpod2
+spec:
+  containers:
+  - name: quota-test
+    image: busybox[;
+    imagePullPolicy: IfNotPresent
+    command: ['sh', '-c', 'echo Pod is Running ; sleep 5000']
+    resources:
+      requests:
+        cpu: "10m"
+      limits:
+        cpu: "20m"
+  restartPolicy: Never
+  
+^d
+
+$ kubectl create -n quota-demo -f quota-demo-testpod2.yaml
+
+$ kubectl get pods -n quota-demo
+
+$ kubectl describe resourcequota/test-cpu-quota --namespace quota-demo
+
+$ cat > quota-demo-testpod3.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpod3
+spec:
+  containers:
+  - name: quota-test
+    image: busybox
+    imagePullPolicy: IfNotPresent
+    command: ['sh', '-c', 'echo Pod is Running ; sleep 5000']
+    resources:
+      requests:
+        cpu: "100m"
+      limits:
+        cpu: "200m"
+  restartPolicy: Never
+
+^d
+
+$ kubectl create -n quota-demo -f quota-demo-testpod3.yaml
+it fails
+
+
+examples in
+
+https://sysdig.com/blog/kubernetes-limits-requests/
+
+-------------------------------------------------------
+Storage
+
+persistant Volume
+
+
+---------------------
+docker 
+ docker volume ls
+   33  docker network ls
+   34  docker network create test123
+   35  docker network ls
+   36  docker inspect network bridge
+   37  docker network ls
+   38  docker inspect network test123
+   
+-------------------------------------------
+ $ kubectl describe node k8master | grep -i taint
+ 
+ nodeSelector: 
+        kubernetes.io/os: linux
+
+----------------------------------------
+Volume
+
+Storage Managment
+
+pv  --> Persistent Volume 
+pvc --> Persistent Volume Claim
+
+
+PVC will discover the PV with the help od storage class
+
+-----------------------------------------------
+Storage Provisioining 
+
+Static provisioning
+
+
+
+create the persistent volume   Block stroage
+
+$ cat > mongopv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongodb-pv
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+ctrl+d to save
+
+Create the pv
+$ kubectl apply -f mongopv.yaml
+
+to display the PV
+
+$ kubectl get pv
+( it shows avalible not yet climed by pvc)
+
+
+to display detailed information about pv
+
+$ kubectl describe pv mongodb-pv
+
+Create the Peristent volume claim
+
+$ cat > mongodb-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+ctrl+d to save
+
+Create the pvc using the yaml file
+
+$ kubectl apply -f mongodb-pvc.yaml
+
+Display the pvc
+
+$ kubectl get pvc
+
+$ kubectl get pv  
+
+
+Create the POD and use the pvc
+
+$ cat > mongopod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mongodb 
+spec:
+  containers:
+  - image: mongo
+    name: mongodb
+    volumeMounts:
+    - name: mongodb-data
+      mountPath: /data/db
+    ports:
+    - containerPort: 27017
+      protocol: TCP
+  volumes:
+  - name: mongodb-data
+    persistentVolumeClaim:
+      claimName: mongodb-pvc
+ctrld to save
+
+Create the pod 
+$ kubectl apply -f mongopod.yaml
+
+to check the pod
+$ kubectl get pod
+$ kubectl get pod -o wide 
+( check the pod got created in which node )
+login to that node and we can see the dir /mnt/data 
+
+
+$ kubectl describe pod mongodb
+
+To verify the data login to the mongodb pod
+$ kubectl exec -it mongodb  bash
+cd /data/db
+touch a b c d e f g
+exit
+
+login to the  node where the pod is running 
+
+$ kubectl get pod -o wide
+
+go to the node
+$ cd /mnt/data
+$ ls -l 
+
+( can see the files )
+
+delete the pod
+kubectl delete pod mongodb 
+
+check deleting the pod do not delete the pv and pvc
+kubectl get pv
+
+kubectl get pvc
+
+recreate the pod and verify that the contents are same it means the same pvc is mapped to the pod
+kubectl apply -f mongopod.yaml
+
+kubectl get pod
+
+login to the pod
+kubectl exec -it mongodb bash
+ls -l /data/db
+the contents are same
+
+exit
+
+delete the pod mongodb
+kubectl delete pod mongodb
+
+check the pv and pvc
+kubectl get pvc
+kubectl get pvc
+
+delete the pvc
+$ kubectl delete pvc mongodb-pvc
+
+check the pv status
+$ kubectl get pv
+$ kubectl delete pv mongodb-pv
+-----------------------------------------
+
+
+storage on NFS
+
+on nfs server ( k8master )
+
+login into k8master
+
+
+# sudo apt update
+
+sudo apt install nfs-kernel-server -y
+
+sudo systemctl status nfs-server
+
+# sudo mkdir /oracledb
+#  cd /oracledb
+# sudo touch f1 f2 f3
+
+# sudo vim /etc/exports
+Shift g
+esc o
+/oracledb *(rw,sync,no_subtree_check,no_root_squash)
+
+:wq!
+
+$ sudo exportfs -a
+
+$ sudo exportfs -v
+
+-------------------------
+on clients install the below package 
+ apt install nfs-common -y
+
+login into worker2
+
+$ apt install nfs-common -y
+
+showmount -e  k8master
+
+testing
+# sudo mkdir /xyz
+#  sudo mount k8master:/oracledb  /xyz
+# cd /xyz
+# ls -l 
+# cd /
+# sudo umount /xyz
+# ls -l /xyz
+no data
+
+login into worker1
+
+$ sudo apt install nfs-common -y
+
+=================
+
+login k8master
+$ cd ( enter key )
+$ cat > nfs-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: nfs
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /oracledb
+    server: k8master
+^d ( to save )
+
+$ kubectl apply -f nfs-pv.yaml
+$ kubectl get pv
+
+create the pvc
+
+$ cat >nfs-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-pvc
+spec:
+  storageClassName: nfs
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+^d
+
+$ kubectl apply -f nfs-pvc.yaml
+$ kubectl get pvc
+
+create the pod
+
+$ cat > nfspod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nfspod
+spec:
+  containers:
+  - image: nginx
+    name: web
+    volumeMounts:
+    - name: nfs-data
+      mountPath: /nfs/db
+    ports:
+    - containerPort: 27017
+      protocol: TCP
+  volumes:
+  - name: nfs-data
+    persistentVolumeClaim:
+      claimName: nfs-pvc
+^d ( save )
+
+$ kubectl apply -f nfspod.yaml
+$ kubectl get pod
+
+login into the pod
+$ kubectl exec -it nfspod bash
+# cd /nfs/db
+# ls -l
+( existing data from nfs server , now create some new data )
+# touch pod1 pod2 pod3
+# echo > welcome 
+  this is from nfs pod
+  ^d
+# ls -l
+
+# exit  ( from the pod )
+
+$ ls -l /oracledb
+( new data updated from the pod )
+
+delete the pods 
+
+
+
+ 
+https://tcheck.co/HzQY88
+
+
+
+
+
+
+
